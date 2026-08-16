@@ -1,0 +1,567 @@
+from IPython.display import HTML, display
+
+display(HTML(r"""
+<canvas id="game" width="700" height="450"
+style="border:5px solid #111;border-radius:15px"></canvas>
+
+<p id="info">🏠 Get your bag and press E</p>
+<p>🎮 Arrow Keys = Move | E = Interact</p>
+<p>❤️ <span id="hp">3</span></p>
+
+<script>
+const c=document.getElementById("game");
+const x=c.getContext("2d");
+
+let place="home";
+let bag=false;
+let lessonDone=false;
+let breakTime=false;
+let escaped=false;
+let gameOver=false;
+let hearts=3;
+
+let p={x:100,y:330};
+
+let girls=[
+ {x:120,y:150},
+ {x:520,y:150}
+];
+
+function person(X,Y,color,hair,adult=false){
+
+  x.fillStyle=hair;
+  x.beginPath();
+  x.arc(X,Y-40,adult?27:25,0,Math.PI*2);
+  x.fill();
+
+  x.fillStyle="#f2b99f";
+  x.beginPath();
+  x.arc(X,Y-36,adult?21:19,0,Math.PI*2);
+  x.fill();
+
+  /* eyes */
+  x.fillStyle="white";
+  x.beginPath();
+  x.arc(X-7,Y-39,5,0,Math.PI*2);
+  x.arc(X+7,Y-39,5,0,Math.PI*2);
+  x.fill();
+
+  x.fillStyle="#111";
+  x.beginPath();
+  x.arc(X-7,Y-39,2,0,Math.PI*2);
+  x.arc(X+7,Y-39,2,0,Math.PI*2);
+  x.fill();
+
+  /* mouth */
+  x.strokeStyle="#922";
+  x.lineWidth=2;
+  x.beginPath();
+  x.arc(X,Y-30,6,0,Math.PI);
+  x.stroke();
+
+  /* body */
+  x.fillStyle=color;
+  x.fillRect(X-20,Y-15,40,50);
+
+  /* arms */
+  x.strokeStyle="#f2b99f";
+  x.lineWidth=8;
+  x.beginPath();
+  x.moveTo(X-18,Y);
+  x.lineTo(X-30,Y+20);
+  x.moveTo(X+18,Y);
+  x.lineTo(X+30,Y+20);
+  x.stroke();
+
+  /* legs */
+  x.strokeStyle="#111";
+  x.lineWidth=8;
+  x.beginPath();
+  x.moveTo(X-8,Y+35);
+  x.lineTo(X-8,Y+63);
+  x.moveTo(X+8,Y+35);
+  x.lineTo(X+8,Y+63);
+  x.stroke();
+}
+
+function girl(){
+  person(p.x,p.y,"#9acd32","#633b20");
+}
+
+function desk(X,Y){
+  x.fillStyle="#8b5a2b";
+  x.fillRect(X-35,Y-8,70,12);
+
+  x.fillStyle="#333";
+  x.fillRect(X-27,Y+4,7,30);
+  x.fillRect(X+20,Y+4,7,30);
+}
+
+function draw(){
+
+  x.clearRect(0,0,700,450);
+
+  /* HOME */
+  if(place=="home"){
+
+    x.fillStyle="#9bdcff";
+    x.fillRect(0,0,700,450);
+
+    x.fillStyle="#65bd55";
+    x.fillRect(0,280,700,170);
+
+    x.font="90px Arial";
+    x.fillText("🏠",270,270);
+
+    x.font="55px Arial";
+    x.fillText("🌳",40,300);
+    x.fillText("🌳",600,300);
+
+    /* Mom */
+    person(120,300,"#7b2cbf","#542b20",true);
+
+    /* Dad */
+    person(190,300,"#111","#222",true);
+
+    /* Dad's tie */
+    x.fillStyle="#9acd32";
+    x.fillRect(186,285,8,35);
+
+    if(!bag){
+      x.font="55px Arial";
+      x.fillText("🎒",330,350);
+
+      x.fillStyle="#111";
+      x.font="18px Arial";
+      x.fillText("🎒 Get your bag and press E",330,410);
+    }
+
+    if(escaped && !gameOver){
+
+      x.fillStyle="#111";
+      x.font="18px Arial";
+      x.fillText("Mom: Welcome home! 💚",70,390);
+      x.fillText("Dad: Good to see you!",400,390);
+      x.fillText("🏠 Enter the house and press E",235,420);
+    }
+  }
+
+  /* SCHOOL */
+  if(place=="school"){
+
+    x.fillStyle="#bde9ff";
+    x.fillRect(0,0,700,450);
+
+    x.fillStyle="#65bd55";
+    x.fillRect(0,300,700,150);
+
+    x.fillStyle="#111";
+    x.fillRect(130,55,440,250);
+
+    x.fillStyle="#9acd32";
+    x.fillRect(130,55,440,50);
+
+    x.fillStyle="#111";
+    x.font="28px Arial";
+    x.fillText("APRILET ACADEMY",220,88);
+
+    x.fillStyle="#9acd32";
+    x.fillRect(315,240,70,65);
+
+    x.font="45px Arial";
+    x.fillText("🚪",325,280);
+
+    x.fillStyle="#111";
+    x.font="18px Arial";
+    x.fillText(
+      escaped ?
+      "➡️ Walk right to go home and press E" :
+      "Go to entrance and press E",
+      230,400
+    );
+  }
+
+  /* HALL */
+  if(place=="hall"){
+
+    x.fillStyle="#f3f5d8";
+    x.fillRect(0,0,700,450);
+
+    x.fillStyle="#111";
+    x.fillRect(0,0,700,55);
+
+    x.fillStyle="#9acd32";
+    x.font="28px Arial";
+    x.fillText("APRILET ACADEMY",245,37);
+
+    x.font="55px Arial";
+    x.fillText("🚪",80,230);
+    x.fillText("🚪",520,230);
+
+    x.fillStyle="#111";
+    x.font="18px Arial";
+    x.fillText("CLASSROOM",45,270);
+    x.fillText("CAFETERIA",500,270);
+
+    if(escaped){
+      x.fillStyle="#9acd32";
+      x.fillRect(300,330,100,100);
+
+      x.fillStyle="#111";
+      x.font="18px Arial";
+      x.fillText("🏠 GO HOME",305,370);
+      x.fillText("Press E",325,400);
+    }
+  }
+
+  /* CLASSROOM */
+  if(place=="classroom"){
+
+    x.fillStyle="#fffbd6";
+    x.fillRect(0,0,700,450);
+
+    x.fillStyle="#111";
+    x.fillRect(160,30,380,95);
+
+    x.fillStyle="#9acd32";
+    x.font="22px Arial";
+    x.fillText("APRILET ACADEMY",250,65);
+
+    x.fillStyle="white";
+    x.font="20px Arial";
+    x.fillText("CLASSROOM",295,100);
+
+    person(350,170,"#111","#704214");
+
+    let students=[
+      [100,270],[230,270],[470,270],[590,270],
+      [100,370],[230,370],[470,370],[590,370]
+    ];
+
+    students.forEach((s,i)=>{
+      desk(s[0],s[1]);
+      person(
+        s[0],s[1]-20,
+        i%2 ? "#111":"#9acd32",
+        i%2 ? "#442211":"#633b20"
+      );
+    });
+
+    if(lessonDone){
+
+      x.fillStyle="#9acd32";
+      x.fillRect(620,170,60,110);
+
+      x.fillStyle="#111";
+      x.font="17px Arial";
+      x.fillText("EXIT",635,220);
+      x.fillText("E",645,250);
+      x.fillText("Lesson finished! Go to EXIT.",210,430);
+
+    }else{
+
+      x.fillStyle="#111";
+      x.font="17px Arial";
+      x.fillText("Go to teacher and press E",245,430);
+    }
+  }
+
+  /* CAFETERIA */
+  if(place=="cafeteria"){
+
+    x.fillStyle="#fff5c4";
+    x.fillRect(0,0,700,450);
+
+    x.fillStyle="#111";
+    x.fillRect(0,0,700,65);
+
+    x.fillStyle="#9acd32";
+    x.font="30px Arial";
+    x.fillText("🍽️ BREAK TIME!",250,43);
+
+    for(let i=0;i<3;i++){
+
+      let X=150+i*200;
+
+      x.fillStyle="#8b5a2b";
+      x.fillRect(X-50,220,100,15);
+
+      x.fillStyle="#222";
+      x.fillRect(X-40,235,10,45);
+      x.fillRect(X+30,235,10,45);
+
+      x.fillRect(X-75,220,20,10);
+      x.fillRect(X+55,220,20,10);
+    }
+
+    x.font="28px Arial";
+    x.fillText("🍕",120,210);
+    x.fillText("🍔",320,210);
+    x.fillText("🍎",520,210);
+
+    x.fillStyle="#9acd32";
+    x.fillRect(620,150,60,130);
+
+    x.fillStyle="#111";
+    x.font="18px Arial";
+    x.fillText("EXIT",632,205);
+    x.fillText("E",645,235);
+
+    if(breakTime){
+
+      girls.forEach(g=>{
+        person(g.x,g.y,"#9acd32","#552244");
+        x.font="22px Arial";
+        x.fillText("😒",g.x-12,g.y-70);
+      });
+
+      x.fillStyle="#d22";
+      x.font="18px Arial";
+      x.fillText("🏃 RUN TO THE FAR EXIT!",240,400);
+    }
+  }
+
+  /* FINAL MESSAGE */
+  if(gameOver){
+
+    x.fillStyle="rgba(0,0,0,.75)";
+    x.fillRect(0,0,700,450);
+
+    x.fillStyle="#9acd32";
+    x.font="42px Arial";
+    x.fillText("🏆 THE END! 🏆",220,190);
+
+    x.fillStyle="white";
+    x.font="22px Arial";
+    x.fillText("She made it home safely! 💚",210,240);
+    x.fillText("Thanks for playing Aprilet Academy!",150,280);
+  }
+
+  if(!gameOver) girl();
+}
+
+
+/* INTERACTION */
+
+function interact(){
+
+  if(gameOver) return;
+
+  /* GET BAG */
+  if(place=="home" && !bag &&
+     Math.hypot(p.x-330,p.y-350)<80){
+
+    bag=true;
+
+    document.getElementById("info").innerText=
+    "🎒 Bag collected! Walk right to school.";
+    return;
+  }
+
+  /* HOME → SCHOOL */
+  if(place=="home" && bag && p.x>400){
+
+    place="school";
+    p={x:100,y:330};
+
+    document.getElementById("info").innerText=
+    "🏫 Welcome to Aprilet Academy!";
+    return;
+  }
+
+  /* SCHOOL → HALL */
+  if(place=="school" &&
+     p.x>280 && p.x<420 && p.y<320){
+
+    place="hall";
+    p={x:350,y:380};
+
+    document.getElementById("info").innerText=
+    "🏫 Go to your classroom.";
+    return;
+  }
+
+  /* HALL → CLASS */
+  if(place=="hall" &&
+     p.x<220 && p.y<300){
+
+    place="classroom";
+    p={x:350,y:390};
+
+    document.getElementById("info").innerText=
+    "📚 Go to the teacher and press E.";
+    return;
+  }
+
+  /* TEACHER */
+  if(place=="classroom" &&
+     !lessonDone &&
+     Math.hypot(p.x-350,p.y-170)<80){
+
+    lessonDone=true;
+
+    document.getElementById("info").innerText=
+    "👩‍🏫 Class finished! Go to the far RIGHT and press E.";
+    return;
+  }
+
+  /* CLASS → CAFETERIA */
+  if(place=="classroom" &&
+     lessonDone &&
+     p.x>600){
+
+    place="cafeteria";
+    p={x:350,y:380};
+    breakTime=true;
+
+    girls=[
+      {x:120,y:150},
+      {x:520,y:150}
+    ];
+
+    document.getElementById("info").innerText=
+    "🔔 BREAK TIME! Run to the far exit!";
+    return;
+  }
+
+  /* CAFETERIA → HALL */
+  if(place=="cafeteria" &&
+     breakTime &&
+     p.x>600){
+
+    breakTime=false;
+    escaped=true;
+
+    place="hall";
+    p={x:350,y:380};
+
+    document.getElementById("info").innerText=
+    "🎉 You escaped! Go to the school exit.";
+    return;
+  }
+
+  /* HALL → SCHOOL */
+  if(place=="hall" &&
+     escaped &&
+     p.x>280 && p.x<420 && p.y>300){
+
+    place="school";
+    p={x:350,y:330};
+
+    document.getElementById("info").innerText=
+    "🌳 You're outside! Walk RIGHT and press E to go home.";
+    return;
+  }
+
+  /* SCHOOL → HOME */
+  if(place=="school" &&
+     escaped &&
+     p.x>550){
+
+    place="home";
+    p={x:350,y:330};
+
+    document.getElementById("info").innerText=
+    "🏠 Mom and Dad are waiting!";
+    return;
+  }
+
+  /* ENTER HOUSE → END */
+  if(place=="home" &&
+     escaped &&
+     p.x>240 && p.x<420 && p.y<290){
+
+    gameOver=true;
+
+    document.getElementById("info").innerText=
+    "🏆 GAME COMPLETE!";
+
+    return;
+  }
+}
+
+
+/* JEALOUS GIRLS */
+
+function chase(){
+
+  if(place!="cafeteria" || !breakTime) return;
+
+  girls.forEach(g=>{
+
+    let dx=p.x-g.x;
+    let dy=p.y-g.y;
+    let d=Math.sqrt(dx*dx+dy*dy);
+
+    if(d>1){
+      g.x+=(dx/d)*1.1;
+      g.y+=(dy/d)*1.1;
+    }
+
+    if(d<35){
+
+      hearts--;
+
+      document.getElementById("hp").innerText=hearts;
+
+      p.x+=(dx/d)*50;
+      p.y+=(dy/d)*50;
+
+      document.getElementById("info").innerText=
+      "😒 They caught you! RUN!";
+
+      if(hearts<=0){
+
+        hearts=3;
+        document.getElementById("hp").innerText=3;
+
+        p={x:350,y:380};
+
+        girls=[
+          {x:120,y:150},
+          {x:520,y:150}
+        ];
+
+        document.getElementById("info").innerText=
+        "💔 Try again! Reach the exit.";
+      }
+    }
+  });
+}
+
+
+/* KEYBOARD */
+
+window.addEventListener("keydown",function(e){
+
+  if(gameOver) return;
+
+  let k=e.key.toLowerCase();
+
+  if(k=="arrowup") p.y-=10;
+  if(k=="arrowdown") p.y+=10;
+  if(k=="arrowleft") p.x-=10;
+  if(k=="arrowright") p.x+=10;
+
+  if(k=="e") interact();
+
+  p.x=Math.max(20,Math.min(680,p.x));
+  p.y=Math.max(70,Math.min(420,p.y));
+
+  draw();
+});
+
+
+/* GAME LOOP */
+
+function loop(){
+  chase();
+  draw();
+  requestAnimationFrame(loop);
+}
+
+draw();
+loop();
+
+</script>
+"""))
