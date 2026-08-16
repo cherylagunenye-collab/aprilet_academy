@@ -6,7 +6,7 @@ style="border:5px solid #111;border-radius:15px"></canvas>
 
 <p id="info">🏠 Get your bag and press E</p>
 <p>🎮 Arrow Keys = Move | E = Interact</p>
-<p>❤️ <span id="hp">3</span></p>
+<p>❤️ <span id="hp">3</span> | score: <span id="score">0</span> | level: <span id="level">1</span></p>
 
 <script>
 const c=document.getElementById("game");
@@ -19,7 +19,9 @@ let breakTime=false;
 let escaped=false;
 let gameOver=false;
 let hearts=3;
-
+let score=0;
+let level=1;
+ 
 let p={x:100,y:330};
 
 let girls=[
@@ -329,11 +331,19 @@ function draw(){
 
     x.fillStyle="#9acd32";
     x.font="42px Arial";
+   if (hearts<=0){
+    x.fillText("GAME OVER!",190,190);
+   }else{
     x.fillText("🏆 THE END! 🏆",220,190);
+   }
 
     x.fillStyle="white";
     x.font="22px Arial";
+   if(hearts<=0){
+  x.fillText("Final Score: " + Math.floor(score),250,240);
+}else{
     x.fillText("She made it home safely! 💚",210,240);
+   }
     x.fillText("Thanks for playing Aprilet Academy!",150,280);
   }
 
@@ -496,6 +506,18 @@ function chase(){
     if(d>1){
       g.x+=(dx/d)*1.1;
       g.y+=(dy/d)*1.1;
+
+       let enemySpeed = 1.1 + (level - 1) * 0.3;
+
+       g.x += (dx/d) * enemySpeed;
+       g.y += (dy/d) * enemySpeed;
+
+     score += 0.01;
+     document.getElementById("score").innerText = Math.floor(score);
+
+    level = math.floor(score / 100) + 1;
+    document.getElementById("level").innerText = level;
+   
     }
 
     if(d<35){
@@ -524,6 +546,12 @@ function chase(){
 
         document.getElementById("info").innerText=
         "💔 Try again! Reach the exit.";
+       if (hearts<=0)
+        
+         gameOver=true;
+
+         document.getElementById("info").innerText=
+          "GAME OVER! score: " + Math.floor(score);
       }
     }
   });
